@@ -30,10 +30,9 @@ class UserController extends StateNotifier<AsyncValue<dynamic>> {
     if (response is ErrorResponse) {
       return Left(response.title);
     } else {
-      print(response);
       ref.read(setAuthStateProvider.notifier).state = response;
-      ref.read(setIsAuthenticatedProvider(true));
       ref.read(setAuthenticatedUserProvider(response['user']));
+      ref.read(setToken(response['authorization']['token']));
 
       final userType = response['user']['role'];
       var pathname = '';
@@ -64,13 +63,32 @@ class UserController extends StateNotifier<AsyncValue<dynamic>> {
     return const Left("Something went wrong");
   }
 
-  Future<Either<String, String>> registerUser(
+  Future<Either<DynamicErrorResponse, String>> registerUser(
       String name, String gender, String userType, File photo) async {
+    final response = await ref.read(userRepositoryProvider).Registeruser(
+        gender: gender, name: name, photo: photo, userType: userType);
 
-        
+    if (response is DynamicErrorResponse) {
+      return Left(response);
+    } else {
+      ref.read(setAuthStateProvider.notifier).state = response;
+      ref.read(setIsAuthenticatedProvider(true));
+      ref.read(setAuthenticatedUserProvider(response['user']));
 
+      final userType = response['user']['role'];
+      var pathname = '';
+      if (userType == "user") {
+        pathname = Pathname.userDashboard;
+      } else if (userType == "rider") {
+        pathname = Pathname.riderDashboard;
+      }
+      return Right(pathname);
+    }
+  }
 
-    return Left("Hello");
+  Future<String> extractTokeninRepo() async {
+    final response = await ref.read(userRepositoryProvider).tokenExtraction();
+    return response ?? "No token";
   }
 }
 

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ridesharing/data/providers/user_controller.dart';
 import 'package:ridesharing/routes.dart';
 import 'package:ridesharing/utils/mediaquery.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OtpConfirmation extends ConsumerStatefulWidget {
   const OtpConfirmation({Key? key}) : super(key: key);
@@ -18,7 +19,6 @@ class _OtpConfirmationState extends ConsumerState<OtpConfirmation> {
     if (otp == null) {
       return;
     }
-
     ref
         .read(userControllerProvider.notifier)
         .login(otp: otp!)
@@ -30,6 +30,10 @@ class _OtpConfirmationState extends ConsumerState<OtpConfirmation> {
                     ), (r) {
               Navigator.pushNamedAndRemoveUntil(context, r, (route) => false);
             }));
+
+    final prefs = await SharedPreferences.getInstance();
+
+    print(prefs.containsKey("TOKEN"));
   }
 
   @override

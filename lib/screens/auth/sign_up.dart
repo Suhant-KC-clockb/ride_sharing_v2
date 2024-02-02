@@ -1,20 +1,24 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:ridesharing/constant/constant.dart';
+import 'package:ridesharing/data/providers/user_controller.dart';
 import 'package:ridesharing/utils/mediaquery.dart';
 import 'package:ridesharing/widgets/commons/gap.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SignUp extends StatefulWidget {
+class SignUp extends ConsumerStatefulWidget {
   const SignUp({Key? key}) : super(key: key);
 
   @override
   _SignUpState createState() => _SignUpState();
 }
 
-class _SignUpState extends State<SignUp> {
+class _SignUpState extends ConsumerState<SignUp> {
   //Text Editing Controllers
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
@@ -27,6 +31,7 @@ class _SignUpState extends State<SignUp> {
   String gender = "male";
   String userType = "user";
   bool isChecked = false;
+  bool imageError = false;
 
   //Form Key
   final _form = GlobalKey<FormState>();
@@ -47,50 +52,52 @@ class _SignUpState extends State<SignUp> {
 
   Future getImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    setState(() {
-      _image = image;
-    });
+
+    var imagePath = await image!.readAsBytes();
+
+    var fileSize = imagePath.length; // Get the file size in bytes
+    if (fileSize <= maxFileSizeInBytes) {
+      setState(() {
+        _image = image;
+        imageError = false;
+      });
+    } else {
+      setState(() {
+        imageError = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select image lesser than 5 MB"),
+        ),
+      );
+    }
   }
 
   Future<void> _registerMethod() async {
-    // if (_image == null) {
-    //   return;
-    // }
-    // final response =
-    //     await Provider.of<Auth>(context, listen: false).registerMethod(
-    //   _nameController.text,
-    //   gender,
-    //   userType,
-    //   _image!,
-    // );
+    if (_image == null) {
+      return;
+    }
 
-    // Fluttertoast.showToast(
-    //   msg: response,
-    //   toastLength: Toast.LENGTH_SHORT,
-    //   gravity: ToastGravity.CENTER,
-    //   timeInSecForIosWeb: 1,
-    //   backgroundColor: Colors.red,
-    //   textColor: Colors.white,
-    //   fontSize: 16.0,
-    // );
-
-    // if (!mounted) return;
-    // String? role = context.read<Auth>().userDetail?.role;
-
-    // print(context.read<Auth>().userDetail?.toJson());
-
-    // // if (role == "user" && response == "Registration Success") {
-    // //   Navigator.pushNamedAndRemoveUntil(
-    // //       context, Pathname.userDashboard, (route) => false);
-    // // } else if (role == "rider" && response == "Registration Success") {
-    // //   Navigator.pushNamedAndRemoveUntil(
-    // //       context, Pathname.riderDashboard, (route) => false);
-    // // }
-    // print(role);
+    ref
+        .read(userControllerProvider.notifier)
+        .registerUser(
+            _nameController.text, gender, userType, File(_image!.path))
+        .then(
+          (value) => value.fold(
+              (l) => ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("${l.key}: ${l.description}"),
+                    ),
+                  ),
+              (r) => print(r)
+              // Navigator.pushNamedAndRemoveUntil(context, r, (route) => false),
+              ),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
+    final register = ref.read(userControllerProvider.notifier);
     return Scaffold(
       appBar: AppBar(),
       body: SingleChildScrollView(
@@ -132,6 +139,18 @@ class _SignUpState extends State<SignUp> {
                             ),
                     ),
                   ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    imageError
+                        ? Text(
+                            "Image should be smaller than 5 MB",
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.error),
+                          )
+                        : const SizedBox(),
+                  ],
                 ),
                 gap10(),
                 TextFormField(
@@ -258,7 +277,33 @@ class _SignUpState extends State<SignUp> {
                   child: SizedBox(
                     width: getWidth(context) * 0.5,
                     child: ElevatedButton(
-                      onPressed: isChecked ? _registerMethod : null,
+                      onPressed: isChecked
+                          ? () {
+                              if (_image == null) {
+                                return;
+                              }
+                              register
+                                  .registerUser(
+                                    _nameController.text,
+                                    gender,
+                                    userType,
+                                    File(_image!.path),
+                                  )
+                                  .then(
+                                    (value) => value.fold(
+                                      (l) => ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              "${l.key}: ${l.description}"),
+                                        ),
+                                      ),
+                                      (r) => Navigator.pushNamedAndRemoveUntil(
+                                          context, r, (route) => false),
+                                    ),
+                                  );
+                            }
+                          : null,
                       child: const Text("Sign up"),
                     ),
                   ),

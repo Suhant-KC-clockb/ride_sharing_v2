@@ -14,6 +14,11 @@ class UserDashboard extends ConsumerWidget {
           const Center(
             child: Text("User Dashboard"),
           ),
+          ref.watch(getAuthenticatedUserProvider).when(
+                data: (data) => Text("${data.id}"!),
+                error: (error, stackTrace) => Text("Something went wrong"),
+                loading: () => CircularProgressIndicator(),
+              ),
           ElevatedButton(
               onPressed: () async {
                 final isCleared = await ref.read(resetStorage);

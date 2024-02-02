@@ -12,7 +12,7 @@ class User {
   String? createdAt;
   String? updatedAt;
   int? hasAccount;
-  
+  String? token;
 
   User(
       {this.id,
@@ -27,7 +27,8 @@ class User {
       this.status,
       this.createdAt,
       this.updatedAt,
-      this.hasAccount});
+      this.hasAccount,
+      this.token});
 
   User.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -43,6 +44,7 @@ class User {
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
     hasAccount = json['has_account'];
+    token = json['token'];
   }
 
   Map<String, dynamic> toJson() {
@@ -60,6 +62,7 @@ class User {
     data['created_at'] = createdAt;
     data['updated_at'] = updatedAt;
     data['has_account'] = hasAccount;
+    data['token'] = token;
     return data;
   }
 }
