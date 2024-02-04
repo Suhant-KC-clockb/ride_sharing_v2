@@ -22,6 +22,7 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Ride Sharing App',
       theme: lightTheme,
+      debugShowCheckedModeBanner: false,
       home: ref.watch(getAuthenticatedUserProvider).when(
             data: (User user) => user.role == "user"
                 ? const UserDashboard()

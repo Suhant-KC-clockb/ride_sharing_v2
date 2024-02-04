@@ -12,4 +12,8 @@ class API {
   static const login = 'verify-otp';
   static const fetchUser = 'fetch-user';
   static const register = 'register';
+
+  //Rider API
+  static const storeRiderDetail = 'store-rider-details';
+  static const fetchRiderDetail = 'fetch-rider';
 }

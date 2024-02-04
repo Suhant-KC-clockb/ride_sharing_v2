@@ -5,7 +5,11 @@ import 'package:ridesharing/screens/auth/otp_screen.dart';
 import 'package:ridesharing/screens/auth/sign_up.dart';
 import 'package:ridesharing/screens/loading.dart';
 import 'package:ridesharing/screens/rider/rider_dashboard.dart';
+import 'package:ridesharing/screens/rider/widgets/bluebook_info.dart';
+import 'package:ridesharing/screens/rider/widgets/license_info.dart';
+import 'package:ridesharing/screens/rider/vehicle_info.dart';
 import 'package:ridesharing/screens/user/user_dashboard.dart';
+import 'package:ridesharing/utils/animation.dart';
 
 class Routes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -42,7 +46,30 @@ class Routes {
       case Pathname.riderDashboard:
         return MaterialPageRoute(
           builder: (context) => const RiderDashboard(),
-        ); //If no routes are found it will redirect to this error page
+        );
+      case Pathname.riderVehiclesInformation:
+        return CustomPageRoute(
+          child: const VehicleInfo(),
+          settings: settings,
+          direction: AxisDirection.right,
+          duration: const Duration(milliseconds: 200),
+        );
+      case Pathname.riderLicenseInformation:
+        return CustomPageRoute(
+          child: const LicenseInfo(),
+          settings: settings,
+          direction: AxisDirection.right,
+          duration: const Duration(milliseconds: 200),
+        );
+      case Pathname.riderBluebookInformation:
+        return CustomPageRoute(
+          child: const BluebookInfo(),
+          settings: settings,
+          direction: AxisDirection.right,
+          duration: const Duration(milliseconds: 200),
+        );
+
+      //If no routes are found it will redirect to this error page
       //TODO: Beautify this error Page
       default:
         return MaterialPageRoute(
@@ -74,4 +101,7 @@ class Pathname {
 
   //Rider Routes
   static const riderDashboard = '/rider-dashboard';
+  static const riderVehiclesInformation = '/rider-vehicles-information';
+  static const riderLicenseInformation = '/rider-License-information';
+  static const riderBluebookInformation = '/rider-bluebook-information';
 }
