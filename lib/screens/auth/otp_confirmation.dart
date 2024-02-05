@@ -2,18 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ridesharing/data/providers/user_controller.dart';
-import 'package:ridesharing/routes.dart';
 import 'package:ridesharing/utils/mediaquery.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class OtpConfirmation extends ConsumerStatefulWidget {
   const OtpConfirmation({Key? key}) : super(key: key);
 
   @override
-  _OtpConfirmationState createState() => _OtpConfirmationState();
+  OtpConfirmationState createState() => OtpConfirmationState();
 }
 
-class _OtpConfirmationState extends ConsumerState<OtpConfirmation> {
+class OtpConfirmationState extends ConsumerState<OtpConfirmation> {
   String? otp;
   Future<void> _otpButton() async {
     if (otp == null) {
@@ -30,10 +28,6 @@ class _OtpConfirmationState extends ConsumerState<OtpConfirmation> {
                     ), (r) {
               Navigator.pushNamedAndRemoveUntil(context, r, (route) => false);
             }));
-
-    final prefs = await SharedPreferences.getInstance();
-
-    print(prefs.containsKey("TOKEN"));
   }
 
   @override

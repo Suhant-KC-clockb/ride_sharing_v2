@@ -1,24 +1,25 @@
 import 'dart:io';
 
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ridesharing/constant/constant.dart';
 import 'package:ridesharing/data/providers/rider_controller.dart';
-import 'package:ridesharing/routes.dart';
 import 'package:ridesharing/utils/mediaquery.dart';
 import 'package:ridesharing/widgets/commons/gap.dart';
 import 'package:ridesharing/widgets/commons/loading_spinner.dart';
+import 'package:ridesharing/widgets/commons/snackbar.dart';
+import 'package:ridesharing/widgets/display_image.dart';
 
 class BluebookInfo extends ConsumerStatefulWidget {
   const BluebookInfo({Key? key}) : super(key: key);
 
   @override
-  _LicenseInfoState createState() => _LicenseInfoState();
+  LicenseInfoState createState() => LicenseInfoState();
 }
 
-class _LicenseInfoState extends ConsumerState<BluebookInfo> {
+class LicenseInfoState extends ConsumerState<BluebookInfo> {
   bool isLoading = false;
 
   final ImagePicker _picker = ImagePicker();
@@ -26,16 +27,36 @@ class _LicenseInfoState extends ConsumerState<BluebookInfo> {
   //Front image
   XFile? _bluebook1;
   bool imageFrontError = false;
+  String? blueBook1API;
 
   //Back image
   XFile? _bluebook2;
   bool imageBackError = false;
+  String? blueBook2API;
 
-  //Vehicle Image
-  XFile? _vehicleImage;
-  bool imageError = false;
+  Future<void> getData() async {
+    final response =
+        await ref.read(riderController.notifier).fetchRiderDetail();
 
-  Future getFrontImage() async {
+    response.fold((l) => null, (r) {
+      setState(() {
+        if (r.blueBook1Img != null) {
+          blueBook1API = r.blueBook1ImgUrl;
+        }
+        if (r.blueBook2Img != null) {
+          blueBook2API = r.blueBook2ImgUrl;
+        }
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    getData();
+    super.initState();
+  }
+
+  Future getBluebookImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
     var imagePath = await image!.readAsBytes();
@@ -50,15 +71,12 @@ class _LicenseInfoState extends ConsumerState<BluebookInfo> {
       setState(() {
         imageFrontError = true;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select image lesser than 5 MB"),
-        ),
-      );
+      if (!mounted) return;
+      imageErrorSnackbar(context: context);
     }
   }
 
-  Future getBackImage() async {
+  Future getBluebookImage2() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
     var imagePath = await image!.readAsBytes();
@@ -73,19 +91,21 @@ class _LicenseInfoState extends ConsumerState<BluebookInfo> {
       setState(() {
         imageBackError = true;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select image lesser than 5 MB"),
-        ),
-      );
+      if (!mounted) return;
+      imageErrorSnackbar(context: context);
     }
   }
 
   void submitButton() async {
-    if (_bluebook2 == null) {
-      return;
-    }
-    if (_bluebook1 == null) {
+    if ((_bluebook2 == null && blueBook1API == null) ||
+        (_bluebook1 == null && blueBook2API == null)) {
+      imageErrorSnackbar(
+        context: context,
+        title: "No photo",
+        message: _bluebook2 == null
+            ? "Please enter your bluebook photo"
+            : "Please enter your bluebook photo no 2",
+      );
       return;
     }
 
@@ -94,17 +114,22 @@ class _LicenseInfoState extends ConsumerState<BluebookInfo> {
     });
 
     final response =
-        //     await ref.read(riderController.notifier).postRiderLicenseDetail(
-        //           back: File(_licenseBack!.path),
-        //           front: File(_licenseFront!.path),
-        //         );
-        // response.fold(
-        //   (l) => print(l),
-        //   (r) => Navigator.pushReplacementNamed(
-        //       context, Pathname.riderLicenseInformation),
-        // );
+        await ref.read(riderController.notifier).postRiderBluebookDetail(
+              bluebook1: _bluebook1 != null ? File(_bluebook1!.path) : null,
+              bluebook2: _bluebook2 != null ? File(_bluebook2!.path) : null,
+            );
 
-        setState(() {
+    response.fold(
+      (l) => customSnackBar(
+        title: "Error",
+        message: l,
+        context: context,
+        contentType: ContentType.failure,
+      ),
+      (r) => Navigator.pop(context),
+    );
+
+    setState(() {
       isLoading = false;
     });
   }
@@ -134,15 +159,14 @@ class _LicenseInfoState extends ConsumerState<BluebookInfo> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Billbook (नामसारी भएको फोटो)"),
+                      const Text("Billbook (नामसारी भएको फोटो)"),
                       SizedBox(
-                          height: 150,
-                          child: (_bluebook1 != null)
-                              ? Image.file(
-                                  File(_bluebook1!.path),
-                                )
-                              : SvgPicture.asset('assets/images/pfp.svg',
-                                  semanticsLabel: 'Acme Logo')),
+                        height: 150,
+                        child: displayImage(
+                            svgImage: "assets/images/pfp.svg",
+                            apiImage: blueBook1API,
+                            image: _bluebook1),
+                      ),
                       ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey.shade300,
@@ -152,8 +176,8 @@ class _LicenseInfoState extends ConsumerState<BluebookInfo> {
                             foregroundColor:
                                 Theme.of(context).colorScheme.primary,
                           ),
-                          onPressed: getFrontImage,
-                          child: Text("Add Photo"))
+                          onPressed: getBluebookImage,
+                          child: const Text("Add Photo"))
                     ],
                   ),
                 ),
@@ -172,15 +196,14 @@ class _LicenseInfoState extends ConsumerState<BluebookInfo> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Billbook (सवारीको विस्तृत विवरण)"),
+                      const Text("Billbook (सवारीको विस्तृत विवरण)"),
                       SizedBox(
-                          height: 150,
-                          child: (_bluebook2 != null)
-                              ? Image.file(
-                                  File(_bluebook2!.path),
-                                )
-                              : SvgPicture.asset('assets/images/pfp.svg',
-                                  semanticsLabel: 'Acme Logo')),
+                        height: 150,
+                        child: displayImage(
+                            svgImage: "assets/images/pfp.svg",
+                            apiImage: blueBook2API,
+                            image: _bluebook2),
+                      ),
                       ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey.shade300,
@@ -190,8 +213,8 @@ class _LicenseInfoState extends ConsumerState<BluebookInfo> {
                             foregroundColor:
                                 Theme.of(context).colorScheme.primary,
                           ),
-                          onPressed: getBackImage,
-                          child: Text("Add Photo"))
+                          onPressed: getBluebookImage2,
+                          child: const Text("Add Photo"))
                     ],
                   ),
                 ),

@@ -13,7 +13,6 @@ import 'package:ridesharing/utils/animation.dart';
 
 class Routes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
-    final arguments = settings.arguments;
     switch (settings.name) {
       case Pathname.otpScreen:
         return MaterialPageRoute(

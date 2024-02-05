@@ -3,22 +3,21 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ridesharing/constant/constant.dart';
 import 'package:ridesharing/data/providers/user_controller.dart';
 import 'package:ridesharing/utils/mediaquery.dart';
 import 'package:ridesharing/widgets/commons/gap.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ridesharing/widgets/commons/snackbar.dart';
 
 class SignUp extends ConsumerStatefulWidget {
   const SignUp({Key? key}) : super(key: key);
 
   @override
-  _SignUpState createState() => _SignUpState();
+  SignUpState createState() => SignUpState();
 }
 
-class _SignUpState extends ConsumerState<SignUp> {
+class SignUpState extends ConsumerState<SignUp> {
   //Text Editing Controllers
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
@@ -65,33 +64,36 @@ class _SignUpState extends ConsumerState<SignUp> {
       setState(() {
         imageError = true;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select image lesser than 5 MB"),
-        ),
-      );
+      if (!mounted) return;
+      imageErrorSnackbar(context: context);
     }
   }
 
   Future<void> _registerMethod() async {
+    final validated = _form.currentState!.validate();
+    if (!validated) {
+      return;
+    }
     if (_image == null) {
       return;
     }
-
     ref
         .read(userControllerProvider.notifier)
         .registerUser(
-            _nameController.text, gender, userType, File(_image!.path))
+          _nameController.text,
+          gender,
+          userType,
+          File(_image!.path),
+        )
         .then(
           (value) => value.fold(
-              (l) => ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("${l.key}: ${l.description}"),
-                    ),
-                  ),
-              (r) => print(r)
-              // Navigator.pushNamedAndRemoveUntil(context, r, (route) => false),
-              ),
+            (l) => customSnackBar(
+                title: "Error",
+                message: "${l.key}: ${l.description}",
+                context: context),
+            (r) =>
+                Navigator.pushNamedAndRemoveUntil(context, r, (route) => false),
+          ),
         );
   }
 
@@ -102,6 +104,7 @@ class _SignUpState extends ConsumerState<SignUp> {
       appBar: AppBar(),
       body: SingleChildScrollView(
         child: Form(
+          key: _form,
           child: Container(
             margin: const EdgeInsets.symmetric(
               horizontal: 20,
@@ -291,13 +294,10 @@ class _SignUpState extends ConsumerState<SignUp> {
                                   )
                                   .then(
                                     (value) => value.fold(
-                                      (l) => ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                              "${l.key}: ${l.description}"),
-                                        ),
-                                      ),
+                                      (l) => customSnackBar(
+                                          title: "Error",
+                                          message: "${l.key}: ${l.description}",
+                                          context: context),
                                       (r) => Navigator.pushNamedAndRemoveUntil(
                                           context, r, (route) => false),
                                     ),

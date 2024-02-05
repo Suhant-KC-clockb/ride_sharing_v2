@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:page_view_dot_indicator/page_view_dot_indicator.dart';
 import 'package:ridesharing/routes.dart';
@@ -17,7 +15,6 @@ class _GettingStartedState extends State<GettingStarted> {
   late int selectedPage;
   late final PageController _pageController;
 
-  Timer? _timer;
 
   @override
   void initState() {

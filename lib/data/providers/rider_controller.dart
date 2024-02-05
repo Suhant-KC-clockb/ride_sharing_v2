@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:dartz/dartz.dart';
@@ -6,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ridesharing/data/models/error_response.dart';
 import 'package:ridesharing/data/models/rider_docs.dart';
 import 'package:ridesharing/data/repository/rider_repository.dart';
+import 'package:ridesharing/screens/rider/vehicle_info.dart';
 
 class RiderController extends StateNotifier<AsyncValue<dynamic>> {
   Ref ref;
@@ -21,7 +21,7 @@ class RiderController extends StateNotifier<AsyncValue<dynamic>> {
     if (response is ErrorResponse) {
       return Left(response.title);
     } else {
-      return Right(true);
+      return const Right(true);
     }
   }
 
@@ -29,15 +29,18 @@ class RiderController extends StateNotifier<AsyncValue<dynamic>> {
       {required String licenseNumber,
       required String bikeDetail,
       required String numberPlate,
+      required String manufacturer,
+      required RideType rideType,
       File? vehiclePhoto}) async {
-    final response = await ref
-        .read(riderRepositoryProvider)
-        .postRiderVehicleDetail(
-            licenseNumber: licenseNumber,
-            bikeDetail: bikeDetail,
-            numberPlate: numberPlate,
-            vehiclePhoto: vehiclePhoto);
-    print(response);
+    final response =
+        await ref.read(riderRepositoryProvider).postRiderVehicleDetail(
+              licenseNumber: licenseNumber,
+              bikeDetail: bikeDetail,
+              numberPlate: numberPlate,
+              vehiclePhoto: vehiclePhoto,
+              manufacturer: manufacturer,
+              rideType: rideType,
+            );
 
     if (response is ErrorResponse) {
       return Left(response.title);
@@ -47,13 +50,30 @@ class RiderController extends StateNotifier<AsyncValue<dynamic>> {
   }
 
   Future<Either<String, bool>> postRiderLicenseDetail({
-    required File front,
-    required File holding,
+    required File? front,
+    required File? holding,
   }) async {
     final response =
         await ref.read(riderRepositoryProvider).postRiderLicenseDetail(
               front: front,
               holding: holding,
+            );
+
+    if (response is ErrorResponse) {
+      return Left(response.title);
+    } else {
+      return const Right(true);
+    }
+  }
+
+  Future<Either<String, bool>> postRiderBluebookDetail({
+    File? bluebook1,
+    File? bluebook2,
+  }) async {
+    final response =
+        await ref.read(riderRepositoryProvider).postRiderBluebookDetail(
+              bluebook1: bluebook1,
+              bluebook2: bluebook2,
             );
 
     if (response is ErrorResponse) {

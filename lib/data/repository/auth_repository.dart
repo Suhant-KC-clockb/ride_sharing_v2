@@ -5,8 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ridesharing/data/models/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// ignore: constant_identifier_names
 const IS_AUTHENTICATED_KEY = 'IS_AUTHENTICATED_KEY';
+// ignore: constant_identifier_names
 const TOKEN = "TOKEN";
+// ignore: constant_identifier_names
 const AUTHENTICATED_USER_EMAIL_KEY = 'AUTHENTICATED_USER_EMAIL_KEY';
 
 final sharedPrefProvider = Provider((_) async {
@@ -15,7 +18,7 @@ final sharedPrefProvider = Provider((_) async {
 
 final storedToken = Provider<String?>((ref) => null);
 
-final setAuthStateProvider = StateProvider<dynamic?>(
+final setAuthStateProvider = StateProvider<dynamic>(
   (ref) => null,
 );
 

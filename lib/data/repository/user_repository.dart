@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ridesharing/constant/api.dart';
-import 'package:http/http.dart' as http;
 import 'package:ridesharing/data/models/error_response.dart';
 import 'package:ridesharing/data/models/success_response.dart';
 import 'package:ridesharing/data/repository/auth_repository.dart';
@@ -13,7 +11,7 @@ import 'package:ridesharing/data/repository/auth_repository.dart';
 abstract class UserRepository {
   Future<dynamic> login({required String phoneNumber, required String otpCode});
   Future<dynamic> phoneNumberRegister({required String phoneNumber});
-  Future<dynamic> Registeruser({
+  Future<dynamic> registerUser({
     required String name,
     required String gender,
     required String userType,
@@ -44,7 +42,7 @@ class UserRepositoryImpl implements UserRepository {
         "otp": otpCode,
       });
       return response.data;
-    } on DioException catch (ex) {
+    } on DioException {
       return ErrorResponse(title: "OTP is not valid");
     } catch (e) {
       return "Error";
@@ -59,8 +57,7 @@ class UserRepositoryImpl implements UserRepository {
       });
 
       return SuccessResponse(title: response.data['message']);
-    } on DioException catch (ex) {
-      print(ex.response?.data[0]['error']);
+    } on DioException {
       return ErrorResponse(title: "Invalid Phone number");
     } catch (e) {
       return ErrorResponse(title: "Something went wrong");
@@ -68,7 +65,7 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
-  Future Registeruser(
+  Future registerUser(
       {required String name,
       required String gender,
       required String userType,
@@ -98,18 +95,16 @@ class UserRepositoryImpl implements UserRepository {
     } on DioException catch (ex) {
       return DynamicErrorResponse(data: ex.response?.data[0]['error']);
     } catch (e) {
-      print(e);
       return ErrorResponse(title: "Server Error");
     }
   }
 
   @override
   Future tokenExtraction() async {
-    var token;
+    String? token;
     ref.read(getToken).when(
           data: (data) {
             token = data;
-            print(token);
           },
           error: (error, stackTrace) {},
           loading: () {},

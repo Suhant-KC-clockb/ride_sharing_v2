@@ -65,7 +65,7 @@ class UserController extends StateNotifier<AsyncValue<dynamic>> {
 
   Future<Either<DynamicErrorResponse, String>> registerUser(
       String name, String gender, String userType, File photo) async {
-    final response = await ref.read(userRepositoryProvider).Registeruser(
+    final response = await ref.read(userRepositoryProvider).registerUser(
         gender: gender, name: name, photo: photo, userType: userType);
 
     if (response is DynamicErrorResponse) {

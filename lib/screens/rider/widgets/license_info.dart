@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ridesharing/constant/constant.dart';
 import 'package:ridesharing/data/providers/rider_controller.dart';
@@ -12,15 +11,16 @@ import 'package:ridesharing/utils/mediaquery.dart';
 import 'package:ridesharing/widgets/commons/gap.dart';
 import 'package:ridesharing/widgets/commons/loading_spinner.dart';
 import 'package:ridesharing/widgets/commons/snackbar.dart';
+import 'package:ridesharing/widgets/display_image.dart';
 
 class LicenseInfo extends ConsumerStatefulWidget {
   const LicenseInfo({Key? key}) : super(key: key);
 
   @override
-  _LicenseInfoState createState() => _LicenseInfoState();
+  LicenseInfoState createState() => LicenseInfoState();
 }
 
-class _LicenseInfoState extends ConsumerState<LicenseInfo> {
+class LicenseInfoState extends ConsumerState<LicenseInfo> {
   bool isLoading = false;
 
   final ImagePicker _picker = ImagePicker();
@@ -28,12 +28,28 @@ class _LicenseInfoState extends ConsumerState<LicenseInfo> {
   //Front image
   XFile? _licenseFront;
   bool imageFrontError = false;
+  String? frontDriverAPI;
 
   //Holding License image
   XFile? _licenseHolding;
   bool imageHoldingError = false;
+  String? imageHoldingAPI;
 
-  Future<void> getData() async {}
+  Future<void> getData() async {
+    final response =
+        await ref.read(riderController.notifier).fetchRiderDetail();
+
+    response.fold((l) => null, (r) {
+      setState(() {
+        if (r.licenseFrontImg != null) {
+          frontDriverAPI = r.licenseFrontImgUrl;
+        }
+        if (r.riderHoldingLicenseImg != null) {
+          imageHoldingAPI = r.riderHoldingLicenseImgUrl;
+        }
+      });
+    });
+  }
 
   @override
   void initState() {
@@ -56,11 +72,11 @@ class _LicenseInfoState extends ConsumerState<LicenseInfo> {
       setState(() {
         imageFrontError = true;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select image lesser than 5 MB"),
-        ),
-      );
+      if (!mounted) return;
+      customSnackBar(
+          title: "Error",
+          message: "Please select image less than 5MB",
+          context: context);
     }
   }
 
@@ -79,19 +95,17 @@ class _LicenseInfoState extends ConsumerState<LicenseInfo> {
       setState(() {
         imageHoldingError = true;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select image lesser than 5 MB"),
-        ),
-      );
+      if (!mounted) return;
+      customSnackBar(
+          title: "Error",
+          message: "Please select image less than 5MB",
+          context: context);
     }
   }
 
   void submitButton() async {
-    if (_licenseHolding == null) {
-      return;
-    }
-    if (_licenseFront == null) {
+    if ((_licenseHolding == null && imageHoldingAPI == null) ||
+        (_licenseFront == null && frontDriverAPI == null)) {
       return;
     }
 
@@ -99,25 +113,31 @@ class _LicenseInfoState extends ConsumerState<LicenseInfo> {
       isLoading = true;
     });
 
-    final response =
-        await ref.read(riderController.notifier).postRiderLicenseDetail(
-              front: File(_licenseFront!.path),
-              holding: File(_licenseHolding!.path),
-            );
+    final response = await ref
+        .read(riderController.notifier)
+        .postRiderLicenseDetail(
+          front: _licenseFront != null ? File(_licenseFront!.path) : null,
+          holding: _licenseHolding != null ? File(_licenseHolding!.path) : null,
+        );
+
     response.fold(
-        (l) => customSnackBar(
-            title: "Error",
-            message: l,
-            context: context,
-            contentType: ContentType.failure), (r) {
-      customSnackBar(
+      (l) => customSnackBar(
+        title: "Error",
+        message: l,
+        context: context,
+        contentType: ContentType.failure,
+      ),
+      (r) {
+        customSnackBar(
           title: "Form updated!",
           message: "Please fill out the next form too!",
-          context: context);
+          context: context,
+        );
 
-      Navigator.pushReplacementNamed(
-          context, Pathname.riderBluebookInformation);
-    });
+        Navigator.pushReplacementNamed(
+            context, Pathname.riderBluebookInformation);
+      },
+    );
 
     setState(() {
       isLoading = false;
@@ -149,15 +169,13 @@ class _LicenseInfoState extends ConsumerState<LicenseInfo> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("The front driver's license"),
+                      const Text("The front driver's license"),
                       SizedBox(
                         height: 150,
-                        child: (_licenseFront != null)
-                            ? Image.file(
-                                File(_licenseFront!.path),
-                              )
-                            : SvgPicture.asset('assets/images/pfp.svg',
-                                semanticsLabel: 'Acme Logo'),
+                        child: displayImage(
+                            svgImage: "assets/images/pfp.svg",
+                            apiImage: frontDriverAPI,
+                            image: _licenseFront),
                       ),
                       ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -169,7 +187,7 @@ class _LicenseInfoState extends ConsumerState<LicenseInfo> {
                                 Theme.of(context).colorScheme.primary,
                           ),
                           onPressed: getFrontImage,
-                          child: Text("Add Photo"))
+                          child: const Text("Add Photo"))
                     ],
                   ),
                 ),
@@ -190,13 +208,18 @@ class _LicenseInfoState extends ConsumerState<LicenseInfo> {
                     children: [
                       const Text("Your photo while holding license"),
                       SizedBox(
-                          height: 150,
-                          child: (_licenseHolding != null)
-                              ? Image.file(
-                                  File(_licenseHolding!.path),
-                                )
-                              : SvgPicture.asset('assets/images/pfp.svg',
-                                  semanticsLabel: 'Acme Logo')),
+                        height: 150,
+                        child: displayImage(
+                            svgImage: "assets/images/pfp.svg",
+                            apiImage: imageHoldingAPI,
+                            image: _licenseHolding),
+                        // child: (_licenseHolding != null)
+                        //     ? Image.file(
+                        //         File(_licenseHolding!.path),
+                        //       )
+                        //     : SvgPicture.asset('assets/images/pfp.svg',
+                        //         semanticsLabel: 'Acme Logo'),
+                      ),
                       ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey.shade300,
@@ -207,7 +230,7 @@ class _LicenseInfoState extends ConsumerState<LicenseInfo> {
                                 Theme.of(context).colorScheme.primary,
                           ),
                           onPressed: getLicenseHolding,
-                          child: Text("Add Photo"))
+                          child: const Text("Add Photo"))
                     ],
                   ),
                 ),

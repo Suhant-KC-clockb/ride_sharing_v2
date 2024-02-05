@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:ridesharing/data/providers/rider_controller.dart';
-import 'package:ridesharing/data/repository/auth_repository.dart';
-import 'package:ridesharing/routes.dart';
 import 'package:ridesharing/screens/rider/widgets/rider_dashboard.dart';
 import 'package:ridesharing/screens/rider/widgets/rider_form.dart';
 import 'package:ridesharing/widgets/commons/loading_spinner.dart';

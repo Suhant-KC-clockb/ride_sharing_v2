@@ -1,18 +1,19 @@
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ridesharing/data/providers/user_controller.dart';
 import 'package:ridesharing/routes.dart';
 import 'package:ridesharing/utils/mediaquery.dart';
+import 'package:ridesharing/widgets/commons/snackbar.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   const OtpScreen({Key? key}) : super(key: key);
 
   @override
-  _OtpScreenState createState() => _OtpScreenState();
+  OtpScreenState createState() => OtpScreenState();
 }
 
-class _OtpScreenState extends ConsumerState<OtpScreen> {
+class OtpScreenState extends ConsumerState<OtpScreen> {
   final TextEditingController _phoneNumberController = TextEditingController();
   final _form = GlobalKey<FormState>();
 
@@ -48,7 +49,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 Navigator.pushNamed(context, Pathname.otpConfirmation);
               }));
     } catch (e) {
-      print(e);
+      customSnackBar(
+          title: "Error",
+          message: "Something went wrong",
+          context: context,
+          contentType: ContentType.failure);
     }
   }
 
@@ -99,7 +104,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     controller: _phoneNumberController,
                     decoration: const InputDecoration(
                       filled: true,
-                      fillColor: const Color(0xffD9D9D9),
+                      fillColor: Color(0xffD9D9D9),
                       labelText: 'Mobile Number',
                       hintText: 'Enter your mobile number',
                       contentPadding:

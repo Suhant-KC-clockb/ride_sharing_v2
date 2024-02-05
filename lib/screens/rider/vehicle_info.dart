@@ -1,12 +1,10 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:ridesharing/constant/api.dart';
 import 'package:ridesharing/constant/constant.dart';
-import 'package:ridesharing/data/models/rider_docs.dart';
 import 'package:ridesharing/data/providers/rider_controller.dart';
 import 'package:ridesharing/routes.dart';
 import 'package:ridesharing/utils/mediaquery.dart';
@@ -14,21 +12,26 @@ import 'package:ridesharing/widgets/commons/gap.dart';
 import 'package:ridesharing/widgets/commons/loading_spinner.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:ridesharing/widgets/commons/snackbar.dart';
+import 'package:ridesharing/widgets/display_image.dart';
+
+enum RideType { car, bike }
 
 class VehicleInfo extends ConsumerStatefulWidget {
   const VehicleInfo({Key? key}) : super(key: key);
 
   @override
-  _VehicleInfoState createState() => _VehicleInfoState();
+  VehicleInfoState createState() => VehicleInfoState();
 }
 
-class _VehicleInfoState extends ConsumerState<VehicleInfo> {
+class VehicleInfoState extends ConsumerState<VehicleInfo> {
   final TextEditingController _licenseNumber = TextEditingController();
   final TextEditingController _transportNumber = TextEditingController();
   final TextEditingController _numberPlate = TextEditingController();
+  final TextEditingController _manufacure = TextEditingController();
 
   final _form = GlobalKey<FormState>();
   String? imageFromAPI;
+  RideType rideType = RideType.car;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -46,6 +49,8 @@ class _VehicleInfoState extends ConsumerState<VehicleInfo> {
         _licenseNumber.text = r.licenseNumber ?? "";
         _transportNumber.text = r.transportName ?? '';
         _numberPlate.text = r.numberPlate ?? '';
+        _manufacure.text = r.transportModel ?? '';
+        rideType = r.rideType == "car" ? RideType.car : RideType.bike;
         if (r.transportImg != null) {
           imageFromAPI = r.transportImgUrl;
         }
@@ -64,6 +69,7 @@ class _VehicleInfoState extends ConsumerState<VehicleInfo> {
     _licenseNumber.dispose();
     _transportNumber.dispose();
     _numberPlate.dispose();
+    _manufacure.dispose();
     super.dispose();
   }
 
@@ -93,6 +99,8 @@ class _VehicleInfoState extends ConsumerState<VehicleInfo> {
               numberPlate: _numberPlate.text,
               vehiclePhoto:
                   _vehiclePhoto != null ? File(_vehiclePhoto!.path) : null,
+              manufacturer: _manufacure.text,
+              rideType: rideType,
             );
     response.fold(
         (l) => customSnackBar(
@@ -128,11 +136,8 @@ class _VehicleInfoState extends ConsumerState<VehicleInfo> {
       setState(() {
         vehiclePhotoError = true;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select image lesser than 5 MB"),
-        ),
-      );
+      if (!mounted) return;
+      imageErrorSnackbar(context: context);
     }
   }
 
@@ -151,6 +156,103 @@ class _VehicleInfoState extends ConsumerState<VehicleInfo> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                RichText(
+                  text: TextSpan(
+                    text: 'Select your vehicle type ',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: '*',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.error),
+                      ),
+                    ],
+                  ),
+                ),
+                gap10(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    InkWell(
+                      splashFactory: NoSplash.splashFactory,
+                      hoverColor: Colors.transparent,
+                      onTap: () => setState(() {
+                        rideType = RideType.car;
+                      }),
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: rideType == RideType.car
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(
+                              color: rideType == RideType.car
+                                  ? Theme.of(context).colorScheme.background
+                                  : Colors.black,
+                              CupertinoIcons.car_detailed,
+                              size: 30,
+                            ),
+                            Text(
+                              "Car",
+                              style: TextStyle(
+                                color: rideType == RideType.car
+                                    ? Theme.of(context).colorScheme.background
+                                    : Colors.black,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      splashFactory: NoSplash.splashFactory,
+                      hoverColor: Colors.transparent,
+                      onTap: () => setState(() {
+                        rideType = RideType.bike;
+                      }),
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: rideType == RideType.bike
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(
+                              color: rideType == RideType.bike
+                                  ? Theme.of(context).colorScheme.background
+                                  : Colors.black,
+                              Icons.motorcycle_sharp,
+                              size: 30,
+                            ),
+                            Text(
+                              "Bike",
+                              style: TextStyle(
+                                color: rideType == RideType.bike
+                                    ? Theme.of(context).colorScheme.background
+                                    : Colors.black,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                gap20(),
                 RichText(
                   text: TextSpan(
                     text: 'License Number ',
@@ -179,6 +281,40 @@ class _VehicleInfoState extends ConsumerState<VehicleInfo> {
                     //returning null is read as correct
                     if (value!.isEmpty) {
                       return 'Please enter your liscense number';
+                    }
+
+                    return null;
+                  },
+                ),
+                gap20(),
+                RichText(
+                  text: TextSpan(
+                    text: 'Manufacturer ',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: '*',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.error),
+                      ),
+                    ],
+                  ),
+                ),
+                gap10(),
+                TextFormField(
+                  controller: _manufacure,
+                  decoration: const InputDecoration(
+                    filled: true,
+                    labelText: 'Manufacturer',
+                    hintText: 'EG: Bajaj',
+                  ),
+                  textInputAction: TextInputAction.next,
+                  keyboardType: TextInputType.text,
+                  validator: (value) {
+                    //returning null is read as correct
+                    if (value!.isEmpty) {
+                      return 'Please enter your manufacturer name';
                     }
 
                     return null;
@@ -284,14 +420,18 @@ class _VehicleInfoState extends ConsumerState<VehicleInfo> {
                         const Text("Photo of your vehicle"),
                         SizedBox(
                           height: 150,
-                          child: (_vehiclePhoto != null)
-                              ? Image.file(
-                                  File(_vehiclePhoto!.path),
-                                )
-                              : (imageFromAPI == null)
-                                  ? SvgPicture.asset('assets/images/pfp.svg',
-                                      semanticsLabel: 'Acme Logo')
-                                  : Image.network('$baseUrl/${imageFromAPI}'),
+                          child: displayImage(
+                              svgImage: "assets/images/pfp.svg",
+                              apiImage: imageFromAPI,
+                              image: _vehiclePhoto),
+                          // child: (_vehiclePhoto != null)
+                          //     ? Image.file(
+                          //         File(_vehiclePhoto!.path),
+                          //       )
+                          //     : (imageFromAPI == null)
+                          //         ? SvgPicture.asset('assets/images/pfp.svg',
+                          //             semanticsLabel: 'Acme Logo')
+                          //         : Image.network('$baseUrl/${imageFromAPI}'),
                         ),
                         ElevatedButton(
                             style: ElevatedButton.styleFrom(
@@ -303,7 +443,7 @@ class _VehicleInfoState extends ConsumerState<VehicleInfo> {
                                   Theme.of(context).colorScheme.primary,
                             ),
                             onPressed: getFrontImage,
-                            child: Text("Add Photo"))
+                            child: const Text("Add Photo"))
                       ],
                     ),
                   ),
@@ -315,7 +455,7 @@ class _VehicleInfoState extends ConsumerState<VehicleInfo> {
                     child: ElevatedButton(
                       onPressed: !loading ? submitButton : null,
                       child: !loading
-                          ? Text("Next")
+                          ? const Text("Next")
                           // buttonLoading()
                           : SizedBox(
                               child: Center(child: buttonLoading()),

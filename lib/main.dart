@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ridesharing/data/models/user.dart';
 import 'package:ridesharing/data/repository/auth_repository.dart';
 import 'package:ridesharing/routes.dart';

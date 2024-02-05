@@ -1,18 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ridesharing/data/providers/rider_controller.dart';
-import 'package:ridesharing/data/repository/auth_repository.dart';
 import 'package:ridesharing/routes.dart';
 
 class RiderForm extends ConsumerStatefulWidget {
   const RiderForm({Key? key}) : super(key: key);
 
   @override
-  _RiderFormState createState() => _RiderFormState();
+  RiderFormState createState() => RiderFormState();
 }
 
-class _RiderFormState extends ConsumerState<RiderForm> {
+class RiderFormState extends ConsumerState<RiderForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
